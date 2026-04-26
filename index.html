@@ -591,8 +591,7 @@
       <div class="toolbar">
         <h2>Weekly timetable</h2>
         <div class="small" id="summaryText">0 events scheduled</div>
-        <button class="ghost" id="loadDemoBtn">Load sample</button>
-        <button class="ghost danger" id="resetBtn">Clear all</button>
+                <button class="ghost danger" id="resetBtn">Clear all</button>
       </div>
 
       <section class="timetable-wrap">
@@ -962,31 +961,11 @@
       persistAndRender();
     }
 
-    function loadDemo() {
-      events = [
-        { id: crypto.randomUUID(), title: "Mathematics", day: 0, start: "08:00", end: "09:30", type: "info", details: "Algebra • Room 204" },
-        { id: crypto.randomUUID(), title: "Physics Lab", day: 1, start: "10:00", end: "12:00", type: "success", details: "Optics practical" },
-        { id: crypto.randomUUID(), title: "English", day: 2, start: "09:00", end: "10:00", type: "amber", details: "Essay writing" },
-        { id: crypto.randomUUID(), title: "Computer Science", day: 3, start: "13:00", end: "15:00", type: "violet", details: "Programming class" },
-        { id: crypto.randomUUID(), title: "Basketball Practice", day: 4, start: "16:00", end: "17:30", type: "rose", details: "Court B" },
-        { id: crypto.randomUUID(), title: "Revision Session", day: 6, start: "18:00", end: "20:00", type: "danger", details: "Exam prep" }
-      ];
-
-      todos = [
-        { id: crypto.randomUUID(), text: "Complete maths homework", done: false },
-        { id: crypto.randomUUID(), text: "Revise physics formulas", done: true },
-        { id: crypto.randomUUID(), text: "Pack lab record", done: false }
-      ];
-
-      persistAndRender();
-    }
-
-    els.saveEventBtn.addEventListener("click", addEvent);
+        els.saveEventBtn.addEventListener("click", addEvent);
     els.clearFormBtn.addEventListener("click", clearForm);
     els.addTodoBtn.addEventListener("click", addTodo);
     els.resetBtn.addEventListener("click", clearAll);
-    els.loadDemoBtn.addEventListener("click", loadDemo);
-
+    
     els.todoInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") addTodo();
     });
