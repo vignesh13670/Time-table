@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accurate Timetable + To-Do Planner</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --line: rgba(255, 255, 255, 0.09);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #818cf8;
+      --danger: #f87171;
+      --success: #34d399;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+      --radius: 18px;
+      --slot-height: min(2.35vh, 22px);
+      --header-height: 52px;
+      --time-col-width: 78px;
+      --days: 7;
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: var(--font);
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 22%),
+        radial-gradient(circle at top right, rgba(129, 140, 248, 0.12), transparent 24%),
+        linear-gradient(160deg, #020617 0%, #0f172a 55%, #111827 100%);
+      color: var(--text);
+    }
+
+    body {
+      padding: 12px;
+    }
+
+    .app {
+      height: calc(100vh - 24px);
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 12px;
+    }
+
+    .panel {
+      background: rgba(17, 24, 39, 0.88);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      min-height: 0;
+    }
+
+    .sidebar {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 12px;
+      padding: 12px;
+      min-height: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 4px 2px;
+    }
+
+    .brand h1 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .brand p {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .pill {
+      padding: 7px 10px;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 999px;
+      font-size: 0.72rem;
+      color: #dbeafe;
+      background: rgba(56, 189, 248, 0.1);
+      white-space: nowrap;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+    }
+
+    .card h2 {
+      font-size: 0.92rem;
+      margin-bottom: 10px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    input, select, button, textarea {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      padding: 10px 11px;
+      font: inherit;
+      outline: none;
+      transition: 0.2s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: rgba(56, 189, 248, 0.7);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+
+    textarea {
+      resize: none;
+      min-height: 72px;
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border: none;
+      color: white;
+    }
+
+    .ghost {
+      background: rgba(255,255,255,0.03);
+    }
+
+    .todo-section {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 10px;
+    }
+
+    .todo-input-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .todo-list {
+      min-height: 0;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .todo-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .todo-item.done .todo-text {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .todo-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+    }
+
+    .small {
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+
+    .footer-note {
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.4;
+      padding: 0 2px;
+    }
+
+    .main {
+      padding: 12px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .toolbar h2 {
+      font-size: 1rem;
+    }
+
+    .legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .legend span {
+      font-size: 0.72rem;
+      padding: 6px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+    }
+
+    .timetable-wrap {
+      min-height: 0;
+      overflow: hidden;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.02);
+      position: relative;
+    }
+
+    .timetable {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: var(--time-col-width) repeat(7, 1fr);
+      grid-template-rows: var(--header-height) 1fr;
+    }
+
+    .corner {
+      grid-column: 1;
+      grid-row: 1;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: rgba(255,255,255,0.02);
+      z-index: 3;
+    }
+
+    .days-header {
+      grid-column: 2 / 9;
+      grid-row: 1;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      z-index: 3;
+    }
+
+    .day-head {
+      border-bottom: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      display: grid;
+      place-items: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .times-col {
+      grid-column: 1;
+      grid-row: 2;
+      position: relative;
+      border-right: 1px solid var(--line);
+      background: rgba(255,255,255,0.015);
+    }
+
+    .time-label {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      transform: translateY(-50%);
+      text-align: center;
+      font-size: 0.66rem;
+      color: var(--muted);
+      padding-right: 6px;
+    }
+
+    .grid-area {
+      grid-column: 2 / 9;
+      grid-row: 2;
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+    }
+
+    .day-column {
+      position: relative;
+      border-right: 1px solid var(--line);
+    }
+
+    .day-column:last-child,
+    .day-head:last-child {
+      border-right: none;
+    }
+
+    .grid-lines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.08) 0,
+        rgba(255,255,255,0.08) 1px,
+        transparent 1px,
+        transparent var(--slot-height)
+      );
+    }
+
+    .hour-lines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent calc(var(--slot-height) * 1.999),
+        rgba(255,255,255,0.12) calc(var(--slot-height) * 1.999),
+        rgba(255,255,255,0.12) calc(var(--slot-height) * 2)
+      );
+    }
+
+    .event-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+    }
+
+    .event-block {
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      border-radius: 14px;
+      padding: 8px 9px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+      cursor: pointer;
+    }
+
+    .event-block strong {
+      font-size: 0.8rem;
+      line-height: 1.15;
+    }
+
+    .event-block small {
+      font-size: 0.66rem;
+      opacity: 0.95;
+      margin-top: 4px;
+      line-height: 1.3;
+    }
+
+    .event-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 0.62rem;
+      margin-top: 6px;
+      opacity: 0.95;
+    }
+
+    .empty-state {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .muted-btn {
+      color: var(--muted);
+    }
+
+    .danger {
+      color: #fecaca;
+      background: rgba(248, 113, 113, 0.12);
+      border-color: rgba(248, 113, 113, 0.25);
+    }
+
+    .success {
+      color: #d1fae5;
+      background: rgba(52, 211, 153, 0.12);
+      border-color: rgba(52, 211, 153, 0.25);
+    }
+
+    .info {
+      color: #dbeafe;
+      background: rgba(59, 130, 246, 0.14);
+      border-color: rgba(59, 130, 246, 0.25);
+    }
+
+    .violet {
+      color: #ede9fe;
+      background: rgba(139, 92, 246, 0.16);
+      border-color: rgba(139, 92, 246, 0.25);
+    }
+
+    .amber {
+      color: #fef3c7;
+      background: rgba(245, 158, 11, 0.14);
+      border-color: rgba(245, 158, 11, 0.25);
+    }
+
+    .rose {
+      color: #ffe4e6;
+      background: rgba(244, 63, 94, 0.13);
+      border-color: rgba(244, 63, 94, 0.24);
+    }
+
+    @media (max-width: 1150px) {
+      .app {
+        grid-template-columns: 320px 1fr;
+      }
+      :root {
+        --time-col-width: 68px;
+      }
+      .event-block strong {
+        font-size: 0.74rem;
+      }
+      .event-block small {
+        font-size: 0.62rem;
+      }
+    }
+
+    @media (max-width: 940px) {
+      body {
+        overflow: auto;
+      }
+      .app {
+        height: auto;
+        min-height: calc(100vh - 24px);
+        grid-template-columns: 1fr;
+      }
+      html, body {
+        overflow: auto;
+      }
+      .timetable-wrap {
+        min-height: 72vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="panel sidebar">
+      <div class="brand">
+        <div>
+          <h1>Smart Timetable Planner</h1>
+          <p>Classes, events, and tasks in one accurate screen.</p>
+        </div>
+        <div class="pill">6:00 AM - 8:30 PM</div>
+      </div>
+
+      <section class="card">
+        <h2>Add class / event</h2>
+        <div class="form-grid">
+          <div class="full">
+            <label for="title">Class or event title</label>
+            <input id="title" type="text" placeholder="Maths, Physics Lab, Meeting..." />
+          </div>
+
+          <div>
+            <label for="day">Day</label>
+            <select id="day"></select>
+          </div>
+
+          <div>
+            <label for="type">Type</label>
+            <select id="type">
+              <option value="info">Class</option>
+              <option value="success">Study</option>
+              <option value="violet">Exam</option>
+              <option value="amber">Activity</option>
+              <option value="rose">Personal</option>
+              <option value="danger">Urgent</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="start">Start time</label>
+            <select id="start"></select>
+          </div>
+
+          <div>
+            <label for="end">End time</label>
+            <select id="end"></select>
+          </div>
+
+          <div class="full">
+            <label for="details">Details</label>
+            <textarea id="details" placeholder="Room no, teacher, topic, notes..."></textarea>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="primary" id="saveEventBtn">Save event</button>
+          <button class="ghost" id="clearFormBtn">Clear form</button>
+        </div>
+      </section>
+
+      <section class="card todo-section">
+        <div>
+          <h2>To-do list</h2>
+          <p class="small">Track tasks with your timetable on the same screen.</p>
+        </div>
+
+        <div class="todo-input-row">
+          <input id="todoInput" type="text" placeholder="Add a task..." />
+          <button class="primary" id="addTodoBtn" style="width: 90px;">Add</button>
+        </div>
+
+        <div class="todo-list" id="todoList"></div>
+      </section>
+
+      <div class="footer-note">
+        Click any event block to delete it. Events automatically appear as one combined block when the selected time spans multiple slots. Data is saved in your browser using local storage.
+      </div>
+    </aside>
+
+    <main class="panel main">
+      <div class="toolbar">
+        <h2>Weekly timetable</h2>
+        <div class="small" id="summaryText">0 events scheduled</div>
+        <button class="ghost" id="loadDemoBtn">Load sample</button>
+        <button class="ghost danger" id="resetBtn">Clear all</button>
+      </div>
+
+      <section class="timetable-wrap">
+        <div class="timetable">
+          <div class="corner">Time</div>
+          <div class="days-header" id="daysHeader"></div>
+          <div class="times-col" id="timesCol"></div>
+          <div class="grid-area" id="gridArea"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const START_MINUTES = 6 * 60;
+    const END_MINUTES = 20 * 60 + 30;
+    const SLOT_MINUTES = 30;
+    const TOTAL_SLOTS = Math.floor((END_MINUTES - START_MINUTES) / SLOT_MINUTES) + 1;
+
+    const STORAGE_KEYS = {
+      events: "smart_timetable_events_v1",
+      todos: "smart_timetable_todos_v1"
+    };
+
+    const els = {
+      day: document.getElementById("day"),
+      type: document.getElementById("type"),
+      title: document.getElementById("title"),
+      start: document.getElementById("start"),
+      end: document.getElementById("end"),
+      details: document.getElementById("details"),
+      saveEventBtn: document.getElementById("saveEventBtn"),
+      clearFormBtn: document.getElementById("clearFormBtn"),
+      daysHeader: document.getElementById("daysHeader"),
+      timesCol: document.getElementById("timesCol"),
+      gridArea: document.getElementById("gridArea"),
+      summaryText: document.getElementById("summaryText"),
+      resetBtn: document.getElementById("resetBtn"),
+      loadDemoBtn: document.getElementById("loadDemoBtn"),
+      todoInput: document.getElementById("todoInput"),
+      addTodoBtn: document.getElementById("addTodoBtn"),
+      todoList: document.getElementById("todoList")
+    };
+
+    let events = loadFromStorage(STORAGE_KEYS.events, []);
+    let todos = loadFromStorage(STORAGE_KEYS.todos, []);
+
+    function loadFromStorage(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveToStorage(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function formatTime(totalMinutes) {
+      const hrs24 = Math.floor(totalMinutes / 60);
+      const mins = totalMinutes % 60;
+      const period = hrs24 >= 12 ? "PM" : "AM";
+      const hrs12 = hrs24 % 12 || 12;
+      return `${hrs12}:${String(mins).padStart(2, "0")} ${period}`;
+    }
+
+    function timeValue(totalMinutes) {
+      const h = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
+      const m = String(totalMinutes % 60).padStart(2, "0");
+      return `${h}:${m}`;
+    }
+
+    function parseTime(value) {
+      const [h, m] = value.split(":").map(Number);
+      return h * 60 + m;
+    }
+
+    function buildSelectors() {
+      DAYS.forEach((day, index) => {
+        const opt = document.createElement("option");
+        opt.value = index;
+        opt.textContent = day;
+        els.day.appendChild(opt);
+      });
+
+      for (let mins = START_MINUTES; mins <= END_MINUTES; mins += SLOT_MINUTES) {
+        const startOpt = document.createElement("option");
+        startOpt.value = timeValue(mins);
+        startOpt.textContent = formatTime(mins);
+        els.start.appendChild(startOpt);
+
+        const endOpt = document.createElement("option");
+        endOpt.value = timeValue(mins);
+        endOpt.textContent = formatTime(mins);
+        els.end.appendChild(endOpt);
+      }
+
+      els.start.value = timeValue(START_MINUTES);
+      els.end.value = timeValue(START_MINUTES + SLOT_MINUTES);
+    }
+
+    function buildGridShell() {
+      els.daysHeader.innerHTML = "";
+      els.timesCol.innerHTML = "";
+      els.gridArea.innerHTML = "";
+
+      DAYS.forEach(day => {
+        const head = document.createElement("div");
+        head.className = "day-head";
+        head.textContent = day.slice(0, 3);
+        els.daysHeader.appendChild(head);
+      });
+
+      const usableHeight = TOTAL_SLOTS * getSlotPixelHeight();
+      els.timesCol.style.height = `${usableHeight}px`;
+      els.gridArea.style.height = `${usableHeight}px`;
+
+      for (let mins = START_MINUTES; mins <= END_MINUTES; mins += 60) {
+        const label = document.createElement("div");
+        label.className = "time-label";
+        const offsetSlots = (mins - START_MINUTES) / SLOT_MINUTES;
+        label.style.top = `${offsetSlots * getSlotPixelHeight()}px`;
+        label.textContent = formatTime(mins);
+        els.timesCol.appendChild(label);
+      }
+
+      DAYS.forEach((_, dayIndex) => {
+        const col = document.createElement("div");
+        col.className = "day-column";
+        col.dataset.dayIndex = dayIndex;
+
+        const gridLines = document.createElement("div");
+        gridLines.className = "grid-lines";
+
+        const hourLines = document.createElement("div");
+        hourLines.className = "hour-lines";
+
+        const emptyState = document.createElement("div");
+        emptyState.className = "empty-state";
+        emptyState.textContent = "";
+
+        const layer = document.createElement("div");
+        layer.className = "event-layer";
+
+        col.appendChild(gridLines);
+        col.appendChild(hourLines);
+        col.appendChild(emptyState);
+        col.appendChild(layer);
+        els.gridArea.appendChild(col);
+      });
+    }
+
+    function getSlotPixelHeight() {
+      const vhHeight = window.innerHeight - 110;
+      const compressed = Math.max(16, Math.min(22, vhHeight / (TOTAL_SLOTS + 7)));
+      document.documentElement.style.setProperty("--slot-height", `${compressed}px`);
+      return compressed;
+    }
+
+    function renderEvents() {
+      const columns = [...document.querySelectorAll(".day-column")];
+      columns.forEach(col => {
+        col.querySelector(".event-layer").innerHTML = "";
+      });
+
+      const slotPx = getSlotPixelHeight();
+
+      events
+        .sort((a, b) => a.day - b.day || parseTime(a.start) - parseTime(b.start))
+        .forEach(event => {
+          const col = columns[event.day];
+          if (!col) return;
+
+          const layer = col.querySelector(".event-layer");
+          const startMins = parseTime(event.start);
+          const endMins = parseTime(event.end);
+          const startIndex = (startMins - START_MINUTES) / SLOT_MINUTES;
+          const spanSlots = Math.max(1, (endMins - startMins) / SLOT_MINUTES);
+
+          const block = document.createElement("div");
+          block.className = `event-block ${event.type}`;
+          block.style.top = `${startIndex * slotPx + 4}px`;
+          block.style.height = `${spanSlots * slotPx - 8}px`;
+          block.title = `Click to delete: ${event.title}`;
+
+          block.innerHTML = `
+            <div>
+              <strong>${escapeHtml(event.title)}</strong>
+              ${event.details ? `<small>${escapeHtml(event.details)}</small>` : ""}
+            </div>
+            <div class="event-meta">
+              <span>${formatTime(startMins)} - ${formatTime(endMins)}</span>
+              <span>${DAYS[event.day].slice(0, 3)}</span>
+            </div>
+          `;
+
+          block.addEventListener("click", () => {
+            const ok = confirm(`Delete "${event.title}" from ${DAYS[event.day]}?`);
+            if (!ok) return;
+            events = events.filter(item => item.id !== event.id);
+            persistAndRender();
+          });
+
+          layer.appendChild(block);
+        });
+
+      els.summaryText.textContent = `${events.length} event${events.length === 1 ? "" : "s"} scheduled`;
+    }
+
+    function renderTodos() {
+      els.todoList.innerHTML = "";
+
+      if (!todos.length) {
+        const empty = document.createElement("div");
+        empty.className = "small";
+        empty.style.padding = "8px 2px";
+        empty.textContent = "No tasks yet. Add your work here.";
+        els.todoList.appendChild(empty);
+        return;
+      }
+
+      todos.forEach(todo => {
+        const item = document.createElement("div");
+        item.className = `todo-item ${todo.done ? "done" : ""}`;
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = todo.done;
+        checkbox.style.width = "18px";
+        checkbox.style.height = "18px";
+        checkbox.addEventListener("change", () => {
+          todo.done = checkbox.checked;
+          persistAndRender();
+        });
+
+        const text = document.createElement("div");
+        text.className = "todo-text";
+        text.textContent = todo.text;
+
+        const actions = document.createElement("div");
+        actions.className = "todo-actions";
+
+        const editBtn = document.createElement("button");
+        editBtn.className = "icon-btn ghost muted-btn";
+        editBtn.textContent = "✎";
+        editBtn.title = "Edit task";
+        editBtn.addEventListener("click", () => {
+          const updated = prompt("Edit task", todo.text);
+          if (updated === null) return;
+          const clean = updated.trim();
+          if (!clean) return;
+          todo.text = clean;
+          persistAndRender();
+        });
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "icon-btn ghost danger";
+        delBtn.textContent = "✕";
+        delBtn.title = "Delete task";
+        delBtn.addEventListener("click", () => {
+          todos = todos.filter(t => t.id !== todo.id);
+          persistAndRender();
+        });
+
+        actions.append(editBtn, delBtn);
+        item.append(checkbox, text, actions);
+        els.todoList.appendChild(item);
+      });
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function validateEvent(title, start, end) {
+      if (!title.trim()) {
+        alert("Please enter a class or event title.");
+        return false;
+      }
+
+      const startMinutes = parseTime(start);
+      const endMinutes = parseTime(end);
+
+      if (endMinutes <= startMinutes) {
+        alert("End time must be later than start time.");
+        return false;
+      }
+
+      if (startMinutes < START_MINUTES || endMinutes > END_MINUTES) {
+        alert("Time must stay between 6:00 AM and 8:30 PM.");
+        return false;
+      }
+
+      return true;
+    }
+
+    function addEvent() {
+      const title = els.title.value.trim();
+      const day = Number(els.day.value);
+      const start = els.start.value;
+      const end = els.end.value;
+      const type = els.type.value;
+      const details = els.details.value.trim();
+
+      if (!validateEvent(title, start, end)) return;
+
+      const newEvent = {
+        id: crypto.randomUUID(),
+        title,
+        day,
+        start,
+        end,
+        type,
+        details
+      };
+
+      events.push(newEvent);
+      persistAndRender();
+      clearForm();
+    }
+
+    function clearForm() {
+      els.title.value = "";
+      els.details.value = "";
+      els.type.value = "info";
+      els.day.value = "0";
+      els.start.value = timeValue(START_MINUTES);
+      els.end.value = timeValue(START_MINUTES + SLOT_MINUTES);
+      els.title.focus();
+    }
+
+    function addTodo() {
+      const text = els.todoInput.value.trim();
+      if (!text) return;
+
+      todos.unshift({
+        id: crypto.randomUUID(),
+        text,
+        done: false
+      });
+
+      els.todoInput.value = "";
+      persistAndRender();
+    }
+
+    function persistAndRender() {
+      saveToStorage(STORAGE_KEYS.events, events);
+      saveToStorage(STORAGE_KEYS.todos, todos);
+      buildGridShell();
+      renderEvents();
+      renderTodos();
+    }
+
+    function clearAll() {
+      const ok = confirm("Clear all events and to-do items?");
+      if (!ok) return;
+      events = [];
+      todos = [];
+      persistAndRender();
+    }
+
+    function loadDemo() {
+      events = [
+        { id: crypto.randomUUID(), title: "Mathematics", day: 0, start: "08:00", end: "09:30", type: "info", details: "Algebra • Room 204" },
+        { id: crypto.randomUUID(), title: "Physics Lab", day: 1, start: "10:00", end: "12:00", type: "success", details: "Optics practical" },
+        { id: crypto.randomUUID(), title: "English", day: 2, start: "09:00", end: "10:00", type: "amber", details: "Essay writing" },
+        { id: crypto.randomUUID(), title: "Computer Science", day: 3, start: "13:00", end: "15:00", type: "violet", details: "Programming class" },
+        { id: crypto.randomUUID(), title: "Basketball Practice", day: 4, start: "16:00", end: "17:30", type: "rose", details: "Court B" },
+        { id: crypto.randomUUID(), title: "Revision Session", day: 6, start: "18:00", end: "20:00", type: "danger", details: "Exam prep" }
+      ];
+
+      todos = [
+        { id: crypto.randomUUID(), text: "Complete maths homework", done: false },
+        { id: crypto.randomUUID(), text: "Revise physics formulas", done: true },
+        { id: crypto.randomUUID(), text: "Pack lab record", done: false }
+      ];
+
+      persistAndRender();
+    }
+
+    els.saveEventBtn.addEventListener("click", addEvent);
+    els.clearFormBtn.addEventListener("click", clearForm);
+    els.addTodoBtn.addEventListener("click", addTodo);
+    els.resetBtn.addEventListener("click", clearAll);
+    els.loadDemoBtn.addEventListener("click", loadDemo);
+
+    els.todoInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") addTodo();
+    });
+
+    [els.title, els.details].forEach(input => {
+      input.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") addEvent();
+      });
+    });
+
+    function syncEndOptions() {
+      const startMinutes = parseTime(els.start.value);
+      [...els.end.options].forEach(opt => {
+        opt.disabled = parseTime(opt.value) <= startMinutes;
+      });
+
+      if (parseTime(els.end.value) <= startMinutes) {
+        const next = [...els.end.options].find(opt => !opt.disabled);
+        if (next) els.end.value = next.value;
+      }
+    }
+
+    els.start.addEventListener("change", syncEndOptions);
+
+    window.addEventListener("resize", () => {
+      buildGridShell();
+      renderEvents();
+    });
+
+    buildSelectors();
+    syncEndOptions();
+    persistAndRender();
+  </script>
+</body>
+</html>
